@@ -1,10 +1,9 @@
-using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class InputManager : MonoBehaviour, IInputManager
 {
-    [SerializeField] private PlayerInput _playerInput;
+    [SerializeField] private PlayerInput playerInput;
 
     private void Start()
     {
@@ -14,22 +13,33 @@ public class InputManager : MonoBehaviour, IInputManager
 
     public Vector2 GetMovement()
     {
-        return _playerInput.currentActionMap.actions[0].ReadValue<Vector2>();
+        return playerInput.currentActionMap.actions[0].ReadValue<Vector2>();
     }
 
     public Vector2 GetLook()
     {
-        return _playerInput.currentActionMap.actions[1].ReadValue<Vector2>();
+        return playerInput.currentActionMap.actions[1].ReadValue<Vector2>();
     }
 
     public float GetInteract()
     {
-        return _playerInput.currentActionMap.actions[2].ReadValue<float>();
+        return playerInput.currentActionMap.actions[2].ReadValue<float>();
+    }
+
+    public bool GetInteractPerformed()
+    {
+        return playerInput.currentActionMap.actions[2].WasPerformedThisFrame();
     }
 
     public float GetSprint()
     {
-        return _playerInput.currentActionMap.actions[8].ReadValue<float>();
+        return playerInput.currentActionMap.actions[8].ReadValue<float>();
+    }
+
+    public bool GetJump()
+    {
+        return playerInput.currentActionMap.actions[5].ReadValue<float>() > 0.01f;
+
     }
 }
 
@@ -38,5 +48,7 @@ public interface IInputManager
     public Vector2 GetMovement();
     public Vector2 GetLook();
     public float GetInteract();
+    public bool GetInteractPerformed();
     public float GetSprint();
+    public bool GetJump();
 }
