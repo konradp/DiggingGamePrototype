@@ -34,18 +34,16 @@ public struct PlayerMovementConfig
 public struct PlayerInteractionConfig
 {
     [SerializeField] private float interactionRange;
+    [SerializeField] private LayerMask deformablesLayer;
     [SerializeField] private LayerMask interactionLayer;
     [SerializeField] private int baseEnergy;
     [SerializeField] private int energyDepletion;
     [SerializeField] private float interactionCooldown;
 
     public float InteractionRange => interactionRange;
-
+    public LayerMask DeformablesLayer => deformablesLayer;
     public LayerMask InteractionLayer => interactionLayer;
-
     public int BaseEnergy => baseEnergy;
-
     public int EnergyDepletion => energyDepletion;
-
     public float InteractionCooldown => interactionCooldown;
 }

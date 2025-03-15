@@ -2,17 +2,21 @@
 
 public class MeshDeformer : MonoBehaviour, IMeshDeformer
 {
+    [SerializeField] DeformerConfig config;
+    
+    /*
     [SerializeField] private int gridSize = 20;
     [SerializeField] private float cellSize = 1f;
     [SerializeField] private float deformationRadius = 2f;
     [SerializeField] private float deformationDepth = 0.3f;
+    */
     
     private float[,] heightMap;
     private Mesh mesh;
 
     private void Start()
     {
-        heightMap = new float[gridSize, gridSize];
+        heightMap = new float[config.GridSize, config.GridSize];
         GenerateMesh();
     }
 
@@ -21,30 +25,30 @@ public class MeshDeformer : MonoBehaviour, IMeshDeformer
         mesh = new Mesh();
         GetComponent<MeshFilter>().mesh = mesh;
 
-        int vertCount = (gridSize + 1) * (gridSize + 1);
+        int vertCount = (config.GridSize + 1) * (config.GridSize + 1);
         Vector3[] vertices = new Vector3[vertCount];
         Vector2[] uv = new Vector2[vertCount];
-        int[] triangles = new int[gridSize * gridSize * 6];
+        int[] triangles = new int[config.GridSize * config.GridSize * 6];
 
-        for (int z = 0, i = 0; z <= gridSize; z++)
+        for (int z = 0, i = 0; z <= config.GridSize; z++)
         {
-            for (int x = 0; x <= gridSize; x++, i++)
+            for (int x = 0; x <= config.GridSize; x++, i++)
             {
-                float height = (x < gridSize && z < gridSize) ? heightMap[x, z] : 0f;
-                vertices[i] = new Vector3(x * cellSize, height, z * cellSize);
-                uv[i] = new Vector2((float)x / gridSize, (float)z / gridSize);
+                float height = (x < config.GridSize && z < config.GridSize) ? heightMap[x, z] : 0f;
+                vertices[i] = new Vector3(x * config.CellSize, height, z * config.CellSize);
+                uv[i] = new Vector2((float)x / config.GridSize, (float)z / config.GridSize);
             }
         }
 
         int tris = 0;
-        for (int z = 0, vert = 0; z < gridSize; z++, vert++)
+        for (int z = 0, vert = 0; z < config.GridSize; z++, vert++)
         {
-            for (int x = 0; x < gridSize; x++, vert++)
+            for (int x = 0; x < config.GridSize; x++, vert++)
             {
                 int topLeft = vert;
-                int bottomLeft = vert + gridSize + 1;
+                int bottomLeft = vert + config.GridSize + 1;
                 int topRight = vert + 1;
-                int bottomRight = vert + gridSize + 2;
+                int bottomRight = vert + config.GridSize + 2;
 
                 triangles[tris + 0] = topLeft;
                 triangles[tris + 1] = bottomLeft;
@@ -138,19 +142,19 @@ public class MeshDeformer : MonoBehaviour, IMeshDeformer
     {
         Vector3 localPoint = transform.InverseTransformPoint(worldPoint);
 
-        int xStart = Mathf.Max(0, Mathf.FloorToInt(localPoint.x / cellSize - deformationRadius));
-        int zStart = Mathf.Max(0, Mathf.FloorToInt(localPoint.z / cellSize - deformationRadius));
-        int xEnd = Mathf.Min(gridSize, Mathf.CeilToInt(localPoint.x / cellSize + deformationRadius));
-        int zEnd = Mathf.Min(gridSize, Mathf.CeilToInt(localPoint.z / cellSize + deformationRadius));
+        int xStart = Mathf.Max(0, Mathf.FloorToInt(localPoint.x / config.CellSize - config.DeformationRadius));
+        int zStart = Mathf.Max(0, Mathf.FloorToInt(localPoint.z / config.CellSize - config.DeformationRadius));
+        int xEnd = Mathf.Min(config.GridSize, Mathf.CeilToInt(localPoint.x / config.CellSize + config.DeformationRadius));
+        int zEnd = Mathf.Min(config.GridSize, Mathf.CeilToInt(localPoint.z / config.CellSize + config.DeformationRadius));
 
         for (int z = zStart; z <= zEnd; z++)
         {
             for (int x = xStart; x <= xEnd; x++)
             {
-                float dist = Vector3.Distance(new Vector3(x * cellSize, 0, z * cellSize), new Vector3(localPoint.x, 0, localPoint.z));
-                if (dist < deformationRadius)
+                float dist = Vector3.Distance(new Vector3(x * config.CellSize, 0, z * config.CellSize), new Vector3(localPoint.x, 0, localPoint.z));
+                if (dist < config.DeformationRadius)
                 {
-                    heightMap[x, z] -= (1 - (dist / deformationRadius)) * deformationDepth;
+                    heightMap[x, z] -= (1 - (dist / config.DeformationRadius)) * config.DeformationDepth;
                 }
             }
         }

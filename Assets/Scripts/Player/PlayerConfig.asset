@@ -23,9 +23,12 @@ MonoBehaviour:
     maxAngle: 280
   PlayerInteractionConfig:
     interactionRange: 3
-    interactionLayer:
+    deformablesLayer:
       serializedVersion: 2
       m_Bits: 64
-    baseEnergy: 1500
-    energyDepletion: 1
-    interactionCooldown: 0.2
+    interactionLayer:
+      serializedVersion: 2
+      m_Bits: 128
+    baseEnergy: 400
+    energyDepletion: 5
+    interactionCooldown: 0.3

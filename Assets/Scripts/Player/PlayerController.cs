@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour, IPlayerController
@@ -6,6 +7,9 @@ public class PlayerController : MonoBehaviour, IPlayerController
     [SerializeField] private PlayerConfig playerConfig;
     [SerializeField] private GameObject coreRef;
     [SerializeField] private GameObject cameraPivot;
+    [SerializeField] private TextMeshProUGUI statusText;
+    [SerializeField] private TextMeshProUGUI stoneText;
+    [SerializeField] private TextMeshProUGUI moneyText;
     
     private IInputManager inputManager;
     private Rigidbody rigidbody;
@@ -15,8 +19,12 @@ public class PlayerController : MonoBehaviour, IPlayerController
     private int currentEnergy;
     private bool canInteract;
     private float interactTimer;
+    private int stoneAmt;
+    private int moneyAmt;
     
     public event Action<int> OnDeform;
+    public event Action OnEnergyRestored;
+
     public PlayerConfig PlayerConfig => playerConfig;
 
     private void Start()
@@ -38,6 +46,8 @@ public class PlayerController : MonoBehaviour, IPlayerController
         MouseRotationY();
         InteractionCooldown();
         TryDeform();
+        TryInteract();
+        TrySetStatusText();
     }
     
     private void FixedUpdate()
@@ -134,7 +144,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
     
     private void TryDeform()
     {
-        if (!inputManager.GetInteractPerformed() || currentEnergy <= 0 || !canInteract)
+        if (!inputManager.GetAttackPerformed() || currentEnergy <= 0 || !canInteract)
         {
             return;
         }
@@ -142,7 +152,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
         RaycastHit hit;
         
         if (Physics.Raycast(cameraPivot.transform.position, cameraPivot.transform.forward, out hit, 
-                playerConfig.PlayerInteractionConfig.InteractionRange, playerConfig.PlayerInteractionConfig.InteractionLayer))
+                playerConfig.PlayerInteractionConfig.InteractionRange, playerConfig.PlayerInteractionConfig.DeformablesLayer))
         {
             var deformer = hit.transform.GetComponent<IMeshDeformer>();
             if (deformer != null)
@@ -155,6 +165,98 @@ public class PlayerController : MonoBehaviour, IPlayerController
             }
         }
     }
+
+    private void TryInteract()
+    {
+        if (!inputManager.GetInteractPerformed())
+        {
+            return;
+        }
+        
+        RaycastHit hit;
+
+        if (Physics.Raycast(cameraPivot.transform.position, cameraPivot.transform.forward, out hit,
+                playerConfig.PlayerInteractionConfig.InteractionRange, playerConfig.PlayerInteractionConfig.InteractionLayer))
+        {
+            var controller = hit.transform.GetComponent<InteractableController>();
+            if (controller != null)
+            {
+                switch (controller.Type)
+                {
+                    case InteractableType.Recharge:
+                        if (moneyAmt <= 0)
+                        {
+                            break;
+                        }
+                        currentEnergy = playerConfig.PlayerInteractionConfig.BaseEnergy;
+                        OnEnergyRestored?.Invoke();
+                        moneyAmt--;
+                        SetMoneyText();
+                        break;
+                    case InteractableType.Sell:
+                        if (stoneAmt == 0)
+                        {
+                            break;
+                        }
+                        moneyAmt += stoneAmt;
+                        stoneAmt = 0;
+                        SetStoneText();
+                        SetMoneyText();
+                        break;
+                    case InteractableType.CollectableStone:
+                        stoneAmt++;
+                        Destroy(hit.transform.gameObject);
+                        SetStoneText();
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
+    }
+
+    private void TrySetStatusText()
+    {
+        RaycastHit hit;
+
+        if (Physics.Raycast(cameraPivot.transform.position, cameraPivot.transform.forward, out hit,
+                playerConfig.PlayerInteractionConfig.InteractionRange,
+                playerConfig.PlayerInteractionConfig.InteractionLayer))
+        {
+            var controller = hit.transform.GetComponent<InteractableController>();
+            if (controller != null)
+            {
+                switch (controller.Type)
+                {
+                    case InteractableType.Recharge:
+                        statusText.text = "Press E to recharge for $1";
+                        break;
+                    case InteractableType.Sell:
+                        statusText.text = "Press E to sell";
+                        break;
+                    case InteractableType.CollectableStone:
+                        statusText.text = "Press E to grab stone";
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
+        else
+        {
+            statusText.text = "";
+        }
+    }
+
+    private void SetStoneText()
+    {
+        stoneText.text = $"Stone: {stoneAmt}";
+    }
+
+    private void SetMoneyText()
+    {
+        moneyText.text = $"Money: {moneyAmt}$";
+    }
     
     #endregion
 }
@@ -162,5 +264,6 @@ public class PlayerController : MonoBehaviour, IPlayerController
 public interface IPlayerController
 {
     event Action<int> OnDeform;
+    event Action OnEnergyRestored;
     public PlayerConfig PlayerConfig { get; }
 }

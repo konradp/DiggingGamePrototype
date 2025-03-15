@@ -13,6 +13,7 @@ public class EnergyBar : MonoBehaviour
         originalEnergy = playerController.PlayerConfig.PlayerInteractionConfig.BaseEnergy;
         
         playerController.OnDeform += EnergyDepletionHandler;
+        playerController.OnEnergyRestored += EnergyRestorationHandler;
     }
 
     private void EnergyDepletionHandler(int p_depletion)
@@ -21,8 +22,14 @@ public class EnergyBar : MonoBehaviour
         rectTransform.sizeDelta = new Vector2(rectTransform.sizeDelta.x, rectTransform.sizeDelta.y - depletionValue);
     }
 
+    private void EnergyRestorationHandler()
+    {
+        rectTransform.sizeDelta = new Vector2(rectTransform.sizeDelta.x, originalHeight);
+    }
+
     private void OnDestroy()
     {
         playerController.OnDeform -= EnergyDepletionHandler;
+        playerController.OnEnergyRestored -= EnergyRestorationHandler;
     }
 }
