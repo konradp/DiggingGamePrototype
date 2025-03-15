@@ -1,6 +1,7 @@
+using System;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IPlayerController
 {
     [SerializeField] private PlayerConfig playerConfig;
     [SerializeField] private GameObject coreRef;
@@ -11,12 +12,19 @@ public class PlayerController : MonoBehaviour
     
     private Quaternion targetRotationX;
     private bool grounded;
+    private int currentEnergy;
+    private bool canInteract;
+    private float interactTimer;
+    
+    public event Action<int> OnDeform;
+    public PlayerConfig PlayerConfig => playerConfig;
 
     private void Start()
     {
         inputManager = coreRef.GetComponent<IInputManager>();
         rigidbody = GetComponent<Rigidbody>();
         targetRotationX = rigidbody.rotation;
+        currentEnergy = playerConfig.PlayerInteractionConfig.BaseEnergy;
     }
 
     private void Update()
@@ -28,6 +36,7 @@ public class PlayerController : MonoBehaviour
         }
 
         MouseRotationY();
+        InteractionCooldown();
         TryDeform();
     }
     
@@ -58,30 +67,30 @@ public class PlayerController : MonoBehaviour
     
     private void MouseRotationY()
     {
-        float rot = -inputManager.GetLook().y * playerConfig.playerMovementConfig.MouseSensitivityY * Time.deltaTime;
+        float rot = -inputManager.GetLook().y * playerConfig.PlayerMovementConfig.MouseSensitivityY * Time.deltaTime;
 
         var rotator = cameraPivot.transform;
         rotator.Rotate(rot, 0f, 0f, Space.Self);
         var rotval = rotator.localEulerAngles.x;
 
-        if (rotval < playerConfig.playerMovementConfig.MaxAngle && rotval > 180f)
+        if (rotval < playerConfig.PlayerMovementConfig.MaxAngle && rotval > 180f)
         {
             rotator.localEulerAngles = new
-                Vector3(playerConfig.playerMovementConfig.MaxAngle, rotator.localEulerAngles.y, rotator.localEulerAngles.z);
+                Vector3(playerConfig.PlayerMovementConfig.MaxAngle, rotator.localEulerAngles.y, rotator.localEulerAngles.z);
         }
 
-        else if (rotval > playerConfig.playerMovementConfig.MinAngle && rotval < 180f)
+        else if (rotval > playerConfig.PlayerMovementConfig.MinAngle && rotval < 180f)
         {
             rotator.localEulerAngles = new
-                Vector3(playerConfig.playerMovementConfig.MinAngle, rotator.localEulerAngles.y, rotator.localEulerAngles.z);
+                Vector3(playerConfig.PlayerMovementConfig.MinAngle, rotator.localEulerAngles.y, rotator.localEulerAngles.z);
         }
     }
     
     private void MouseRotationX()
     {
-        var horizontal = inputManager.GetLook().x * playerConfig.playerMovementConfig.MouseSensitivityX * Time.fixedDeltaTime;
+        var horizontal = inputManager.GetLook().x * playerConfig.PlayerMovementConfig.MouseSensitivityX * Time.fixedDeltaTime;
         targetRotationX *= Quaternion.AngleAxis(horizontal, Vector3.up);
-        Quaternion yRotation = Quaternion.Lerp(rigidbody.rotation, targetRotationX, playerConfig.playerMovementConfig.SmoothTimeX);
+        Quaternion yRotation = Quaternion.Lerp(rigidbody.rotation, targetRotationX, playerConfig.PlayerMovementConfig.SmoothTimeX);
         rigidbody.MoveRotation(yRotation);
     }
 
@@ -93,7 +102,7 @@ public class PlayerController : MonoBehaviour
         }
         
         var speed = inputManager.GetSprint() > 0.1f
-            ? playerConfig.playerMovementConfig.SprintSpeed : playerConfig.playerMovementConfig.Speed;
+            ? playerConfig.PlayerMovementConfig.SprintSpeed : playerConfig.PlayerMovementConfig.Speed;
 
         Vector3 moveAxis = speed * Time.fixedDeltaTime * (gameObject.transform.forward * inputManager.GetMovement().y
                                                           + gameObject.transform.right * inputManager.GetMovement().x);
@@ -104,29 +113,45 @@ public class PlayerController : MonoBehaviour
     {
         if (grounded && inputManager.GetJump())
         {
-            rigidbody.AddForce(Vector3.up * playerConfig.playerMovementConfig.JumpForce, ForceMode.Impulse);
+            rigidbody.AddForce(Vector3.up * playerConfig.PlayerMovementConfig.JumpForce, ForceMode.Impulse);
         }
     }
     #endregion
     
     #region === Interaction ===
 
+    private void InteractionCooldown()
+    {
+        if (!canInteract)
+        {
+            interactTimer -= Time.deltaTime;
+            if (interactTimer <= 0)
+            {
+                canInteract = true;
+            }
+        }
+    }
+    
     private void TryDeform()
     {
-        if (!inputManager.GetInteractPerformed())
+        if (!inputManager.GetInteractPerformed() || currentEnergy <= 0 || !canInteract)
         {
             return;
         }
-        
+
         RaycastHit hit;
         
         if (Physics.Raycast(cameraPivot.transform.position, cameraPivot.transform.forward, out hit, 
-                playerConfig.playerInteractionConfig.InteractionRange, playerConfig.playerInteractionConfig.InteractionLayer))
+                playerConfig.PlayerInteractionConfig.InteractionRange, playerConfig.PlayerInteractionConfig.InteractionLayer))
         {
             var deformer = hit.transform.GetComponent<IMeshDeformer>();
             if (deformer != null)
             {
                 deformer.Deform(hit.point);
+                currentEnergy -= playerConfig.PlayerInteractionConfig.EnergyDepletion;
+                OnDeform?.Invoke(playerConfig.PlayerInteractionConfig.EnergyDepletion);
+                canInteract = false;
+                interactTimer = playerConfig.PlayerInteractionConfig.InteractionCooldown;
             }
         }
     }
@@ -134,4 +159,8 @@ public class PlayerController : MonoBehaviour
     #endregion
 }
 
-
+public interface IPlayerController
+{
+    event Action<int> OnDeform;
+    public PlayerConfig PlayerConfig { get; }
+}

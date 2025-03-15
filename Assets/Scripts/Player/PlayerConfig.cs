@@ -4,8 +4,8 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Configs/Create PlayerConfig", fileName = "PlayerConfig")]
 public class PlayerConfig : ScriptableObject
 {
-    public PlayerMovementConfig playerMovementConfig;
-    public PlayerInteractionConfig playerInteractionConfig;
+    public PlayerMovementConfig PlayerMovementConfig;
+    public PlayerInteractionConfig PlayerInteractionConfig;
 }
 
 [Serializable]
@@ -35,8 +35,17 @@ public struct PlayerInteractionConfig
 {
     [SerializeField] private float interactionRange;
     [SerializeField] private LayerMask interactionLayer;
+    [SerializeField] private int baseEnergy;
+    [SerializeField] private int energyDepletion;
+    [SerializeField] private float interactionCooldown;
 
     public float InteractionRange => interactionRange;
 
     public LayerMask InteractionLayer => interactionLayer;
+
+    public int BaseEnergy => baseEnergy;
+
+    public int EnergyDepletion => energyDepletion;
+
+    public float InteractionCooldown => interactionCooldown;
 }

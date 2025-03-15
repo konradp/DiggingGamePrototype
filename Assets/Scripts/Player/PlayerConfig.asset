@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a1c41d60ae542178b31c1db86997400, type: 3}
   m_Name: PlayerConfig
   m_EditorClassIdentifier: 
-  playerMovementConfig:
+  PlayerMovementConfig:
     speed: 3
     sprintSpeed: 5
     mouseSensitivityX: 12
@@ -21,8 +21,11 @@ MonoBehaviour:
     jumpForce: 150
     minAngle: 85
     maxAngle: 280
-  playerInteractionConfig:
+  PlayerInteractionConfig:
     interactionRange: 3
     interactionLayer:
       serializedVersion: 2
       m_Bits: 64
+    baseEnergy: 1500
+    energyDepletion: 1
+    interactionCooldown: 0.2
