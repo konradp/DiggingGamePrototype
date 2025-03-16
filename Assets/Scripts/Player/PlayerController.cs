@@ -12,26 +12,26 @@ public class PlayerController : MonoBehaviour, IPlayerController
     [SerializeField] private TextMeshProUGUI moneyText;
     
     private IInputManager inputManager;
-    private Rigidbody rigidbody;
+    private Rigidbody rb;
     
     private Quaternion targetRotationX;
     private bool grounded;
-    private int currentEnergy;
     private bool canInteract;
     private float interactTimer;
+    
+    private int currentEnergy;
     private int stoneAmt;
     private int moneyAmt;
     
+    public PlayerConfig PlayerConfig => playerConfig;
     public event Action<int> OnDeform;
     public event Action OnEnergyRestored;
-
-    public PlayerConfig PlayerConfig => playerConfig;
 
     private void Start()
     {
         inputManager = coreRef.GetComponent<IInputManager>();
-        rigidbody = GetComponent<Rigidbody>();
-        targetRotationX = rigidbody.rotation;
+        rb = GetComponent<Rigidbody>();
+        targetRotationX = rb.rotation;
         currentEnergy = playerConfig.PlayerInteractionConfig.BaseEnergy;
     }
 
@@ -100,8 +100,8 @@ public class PlayerController : MonoBehaviour, IPlayerController
     {
         var horizontal = inputManager.GetLook().x * playerConfig.PlayerMovementConfig.MouseSensitivityX * Time.fixedDeltaTime;
         targetRotationX *= Quaternion.AngleAxis(horizontal, Vector3.up);
-        Quaternion yRotation = Quaternion.Lerp(rigidbody.rotation, targetRotationX, playerConfig.PlayerMovementConfig.SmoothTimeX);
-        rigidbody.MoveRotation(yRotation);
+        Quaternion yRotation = Quaternion.Lerp(rb.rotation, targetRotationX, playerConfig.PlayerMovementConfig.SmoothTimeX);
+        rb.MoveRotation(yRotation);
     }
 
     private void PlayerMovement()
@@ -116,29 +116,32 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
         Vector3 moveAxis = speed * Time.fixedDeltaTime * (gameObject.transform.forward * inputManager.GetMovement().y
                                                           + gameObject.transform.right * inputManager.GetMovement().x);
-        rigidbody.MovePosition(gameObject.transform.position + moveAxis);
+        rb.MovePosition(gameObject.transform.position + moveAxis);
     }
 
     private void PlayerJump()
     {
         if (grounded && inputManager.GetJump())
         {
-            rigidbody.AddForce(Vector3.up * playerConfig.PlayerMovementConfig.JumpForce, ForceMode.Impulse);
+            rb.AddForce(Vector3.up * playerConfig.PlayerMovementConfig.JumpForce, ForceMode.Impulse);
         }
     }
+    
     #endregion
     
     #region === Interaction ===
 
     private void InteractionCooldown()
     {
-        if (!canInteract)
+        if (canInteract)
         {
-            interactTimer -= Time.deltaTime;
-            if (interactTimer <= 0)
-            {
-                canInteract = true;
-            }
+            return;
+        }
+        
+        interactTimer -= Time.deltaTime;
+        if (interactTimer <= 0)
+        {
+            canInteract = true;
         }
     }
     
@@ -159,9 +162,9 @@ public class PlayerController : MonoBehaviour, IPlayerController
             {
                 deformer.Deform(hit.point);
                 currentEnergy -= playerConfig.PlayerInteractionConfig.EnergyDepletion;
-                OnDeform?.Invoke(playerConfig.PlayerInteractionConfig.EnergyDepletion);
                 canInteract = false;
                 interactTimer = playerConfig.PlayerInteractionConfig.InteractionCooldown;
+                OnDeform?.Invoke(playerConfig.PlayerInteractionConfig.EnergyDepletion);
             }
         }
     }
@@ -179,7 +182,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
                 playerConfig.PlayerInteractionConfig.InteractionRange, playerConfig.PlayerInteractionConfig.InteractionLayer))
         {
             var controller = hit.transform.GetComponent<InteractableController>();
-            if (controller != null)
+            if (controller!= null)
             {
                 switch (controller.Type)
                 {
@@ -189,9 +192,9 @@ public class PlayerController : MonoBehaviour, IPlayerController
                             break;
                         }
                         currentEnergy = playerConfig.PlayerInteractionConfig.BaseEnergy;
-                        OnEnergyRestored?.Invoke();
                         moneyAmt--;
                         SetMoneyText();
+                        OnEnergyRestored?.Invoke();
                         break;
                     case InteractableType.Sell:
                         if (stoneAmt == 0)

@@ -4,13 +4,6 @@ public class MeshDeformer : MonoBehaviour, IMeshDeformer
 {
     [SerializeField] DeformerConfig config;
     
-    /*
-    [SerializeField] private int gridSize = 20;
-    [SerializeField] private float cellSize = 1f;
-    [SerializeField] private float deformationRadius = 2f;
-    [SerializeField] private float deformationDepth = 0.3f;
-    */
-    
     private float[,] heightMap;
     private Mesh mesh;
 

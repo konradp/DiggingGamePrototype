@@ -7,7 +7,7 @@ public class ShovelController : MonoBehaviour
     private IPlayerController playerController;
 
     private bool shoveTimer;
-    private float timer = 0.0f;
+    private float timer;
     private float timerMax = 0.3f;
 
     private void Start()

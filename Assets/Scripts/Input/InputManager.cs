@@ -21,11 +21,6 @@ public class InputManager : MonoBehaviour, IInputManager
         return playerInput.currentActionMap.actions[1].ReadValue<Vector2>();
     }
 
-    public float GetAttack()
-    {
-        return playerInput.currentActionMap.actions[2].ReadValue<float>();
-    }
-
     public bool GetAttackPerformed()
     {
         return playerInput.currentActionMap.actions[2].WasPerformedThisFrame();
@@ -44,7 +39,6 @@ public class InputManager : MonoBehaviour, IInputManager
     public bool GetJump()
     {
         return playerInput.currentActionMap.actions[5].ReadValue<float>() > 0.01f;
-
     }
 }
 
@@ -52,7 +46,6 @@ public interface IInputManager
 {
     public Vector2 GetMovement();
     public Vector2 GetLook();
-    public float GetAttack();
     public bool GetAttackPerformed();
     public bool GetInteractPerformed();
     public float GetSprint();

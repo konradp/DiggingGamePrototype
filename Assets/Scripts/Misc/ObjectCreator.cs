@@ -27,12 +27,12 @@ public class ObjectCreator : MonoBehaviour
     
     private Vector3 GetRandomPositionInsideBox()
     {
-        Vector3 boxSize = boxCollider.size;
-        Vector3 boxCenter = boxCollider.transform.position + boxCollider.center;
+        var boxSize = boxCollider.size;
+        var boxCenter = boxCollider.transform.position + boxCollider.center;
 
-        float x = Random.Range(boxCenter.x - boxSize.x / 2, boxCenter.x + boxSize.x / 2);
-        float y = Random.Range(boxCenter.y - boxSize.y / 2, boxCenter.y + boxSize.y / 2);
-        float z = Random.Range(boxCenter.z - boxSize.z / 2, boxCenter.z + boxSize.z / 2);
+        var x = Random.Range(boxCenter.x - boxSize.x / 2, boxCenter.x + boxSize.x / 2);
+        var y = Random.Range(boxCenter.y - boxSize.y / 2, boxCenter.y + boxSize.y / 2);
+        var z = Random.Range(boxCenter.z - boxSize.z / 2, boxCenter.z + boxSize.z / 2);
 
         return new Vector3(x, y, z);
     }

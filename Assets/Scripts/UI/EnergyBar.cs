@@ -3,6 +3,7 @@ using UnityEngine;
 public class EnergyBar : MonoBehaviour
 {
     [SerializeField] private PlayerController playerController;
+    
     private RectTransform rectTransform;
     private float originalHeight;
     private int originalEnergy;
